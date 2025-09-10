@@ -69,3 +69,26 @@
 (if (> potential-match available-pool)
 available-pool
 potential-match)))
+;; Mint new tokens
+(define-public (mint (recipient principal))
+(begin
+(asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+(var-set total-supply (+ (var-get total-supply) u1))
+(map-set token-balances recipient
+(+ (default-to u0 (map-get? token-balances recipient)) u1))
+(ok (var-get total-supply))))
+;; Add funds to matching pool
+(define-public (fund-matching-pool (amount uint))
+(begin
+(asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+(var-set matching-pool (+ (var-get matching-pool) amount))
+(ok true)))
+;; Read-only functions
+(define-read-only (get-balance (account principal))
+(ok (default-to u0 (map-get? token-balances account))))
+(define-read-only (get-donation-history (donor principal) (cause-id (string-ascii 64)))
+(ok (map-get? donation-history { donor: donor, cause: cause-id })))
+(define-read-only (get-matching-pool)
+(ok (var-get matching-pool)))
+(define-read-only (is-cause-approved (cause-id (string-ascii 64)))
+(ok (default-to false (map-get? approved-causes cause-id))))
