@@ -25,3 +25,20 @@
 (ok (some (var-get token-uri))))
 (define-read-only (get-owner (token-id uint))
 (ok (some tx-sender)))
+;; Core token transfer function
+(define-public (transfer (token-id uint) (sender principal) (recipient principal))
+(let ((current-balance (default-to u0 (map-get? token-balances sender))))
+(begin
+(asserts! (is-eq tx-sender sender) ERR-NOT-AUTHORIZED)
+(asserts! (>= current-balance u1) ERR-INSUFFICIENT-BALANCE)
+(map-set token-balances sender
+(- current-balance u1))
+(map-set token-balances recipient
+(+ (default-to u0 (map-get? token-balances recipient)) u1))
+(ok true))))
+;; Register approved charitable cause
+(define-public (register-cause (cause-id (string-ascii 64)))
+(begin
+(asserts! (is-eq tx-sender (var-get contract-owner)) ERR-NOT-AUTHORIZED)
+(map-set approved-causes cause-id true)
+(ok true)))
